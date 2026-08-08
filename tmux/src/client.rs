@@ -1,15 +1,18 @@
+// Client module for querying the daemon socket with instant cache fallbacks.
+
 use anyhow::Result;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::UnixStream,
 };
-use crate::utils;
+
+// ── Core Query Logic ──
 
 pub async fn query(pane_id: &str, pane_path: &str) -> Result<()> {
     match try_socket(pane_id, pane_path).await {
         Ok(s) => print!("{s}"),
         Err(_) => {
-            let cache = utils::cache_path(pane_id);
+            let cache = crate::utils::cache_path(pane_id);
             if let Ok(cached) = tokio::fs::read_to_string(&cache).await {
                 print!("{cached}");
             }
@@ -21,7 +24,7 @@ pub async fn query(pane_id: &str, pane_path: &str) -> Result<()> {
 async fn try_socket(pane_id: &str, pane_path: &str) -> anyhow::Result<String> {
     let connect = tokio::time::timeout(
         std::time::Duration::from_millis(200),
-        UnixStream::connect(utils::sock_path()),
+        UnixStream::connect(crate::utils::sock_path()),
     )
     .await??;
 

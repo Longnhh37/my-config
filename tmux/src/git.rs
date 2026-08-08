@@ -1,3 +1,5 @@
+// Performance caching agent for fast extraction of git repository structures.
+
 use git2::{Repository, StatusOptions};
 use std::{
     collections::HashMap,
@@ -8,7 +10,6 @@ use tokio::sync::Mutex;
 
 const CACHE_TTL: Duration = Duration::from_secs(3);
 const COLD_START_TIMEOUT: Duration = Duration::from_millis(150);
-
 const EVICT_AFTER: Duration = Duration::from_secs(300);
 
 #[derive(Clone)]
@@ -16,6 +17,7 @@ pub struct GitInfo {
     pub repo: String,
     pub branch: String,
     pub changed: u32,
+    pub untracked: u32,
     pub insertions: u32,
     pub deletions: u32,
 }
@@ -35,12 +37,13 @@ fn cache() -> Arc<Mutex<HashMap<String, CacheEntry>>> {
         .clone()
 }
 
+// ── Public Cache Access ──
+
 pub async fn get_cached(path: &str) -> Option<GitInfo> {
     let cache = cache();
 
     let (cached_val, needs_refresh) = {
         let mut guard = cache.lock().await;
-
         guard.retain(|_, e| e.last_accessed.elapsed() < EVICT_AFTER);
 
         match guard.get_mut(path) {
@@ -88,6 +91,8 @@ pub async fn get_cached(path: &str) -> Option<GitInfo> {
     }
 }
 
+// ── Git Core Discovery ──
+
 async fn fetch_git_info(path: &str) -> Option<GitInfo> {
     let path_owned = path.to_string();
 
@@ -100,20 +105,26 @@ async fn fetch_git_info(path: &str) -> Option<GitInfo> {
         let repo_name = workdir.file_name()?.to_string_lossy().into_owned();
 
         let mut opts = StatusOptions::new();
-        opts.include_untracked(false);
+        opts.include_untracked(true);
+	opts.recurse_untracked_dirs(true);
         let statuses = repo.statuses(Some(&mut opts)).ok()?;
 
         let mut changed = 0;
-        for entry in statuses.iter() {
-            let status = entry.status();
-            if status.is_wt_modified()
-                || status.is_index_modified()
-                || status.is_wt_deleted()
-                || status.is_index_deleted()
-            {
-                changed += 1;
-            }
-        }
+	let mut untracked = 0;
+	for entry in statuses.iter() {
+   		let status = entry.status();
+    		if status.is_wt_new() {
+        		untracked += 1;
+        		continue;
+    		}
+    		if status.is_wt_modified()
+        		|| status.is_index_modified()
+        		|| status.is_wt_deleted()
+        		|| status.is_index_deleted()
+    		{
+        		changed += 1;
+    		}
+	}
 
         let mut insertions = 0;
         let mut deletions = 0;
@@ -130,6 +141,7 @@ async fn fetch_git_info(path: &str) -> Option<GitInfo> {
             repo: repo_name,
             branch,
             changed,
+	    untracked,
             insertions,
             deletions,
         })

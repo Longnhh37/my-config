@@ -1,32 +1,18 @@
-// collectors/services.rs
-//
-// Detects manually-started services that ports.rs không cover được:
-//
-//   Kubernetes  → kubectl current-context + TCP probe API server
-//   Brew        → `brew services list --json`  (bỏ qua các service đã hiện qua port)
-//
-// Poll interval: 15 s (chậm hơn ports.rs vì các lệnh này tốn kém hơn)
+// Background collector inspecting Kubernetes clusters, Brew services, and OrbStack status.
 
 use std::collections::HashSet;
 use std::time::Duration;
-
 use serde::Deserialize;
 use tokio::net::TcpStream;
 use tokio::process::Command;
-
 use crate::state::SharedState;
 
 const POLL_INTERVAL: Duration = Duration::from_secs(15);
-
 const PORT_COVERED: &[&str] = &[
-    "redis",
-    "postgresql",
-    "postgresql@14",
-    "postgresql@16",
-    "mysql",
-    "mysql@8.0",
-    "mongodb-community",
+    "redis", "postgresql", "postgresql@14", "postgresql@16", "mysql", "mysql@8.0", "mongodb-community",
 ];
+
+// ── Main Routing Loop ──
 
 pub async fn run(state: SharedState) {
     loop {
@@ -44,16 +30,10 @@ pub async fn run(state: SharedState) {
     }
 }
 
-// ── OrbStack ────────────────────────────────────────────────────────────────
-//
-// Ưu tiên:
-//   1. docker.sock của OrbStack
-//   2. orbctl status
-//
+// ── OrbStack Checker ──
 
 async fn check_orbstack() -> bool {
     let home = crate::utils::home_dir();
-
     let candidates = [
         format!("{home}/.orbstack/run/docker.sock"),
         format!("{home}/Library/Containers/com.orbstack.mac/Data/docker.sock"),
@@ -73,7 +53,6 @@ async fn check_orbstack() -> bool {
         return true;
     }
 
-    // Last resort: orbctl
     tokio::time::timeout(
         Duration::from_millis(500),
         Command::new("orbctl")
@@ -88,13 +67,7 @@ async fn check_orbstack() -> bool {
     .unwrap_or(false)
 }
 
-// ── Kubernetes ───────────────────────────────────────────────────────────────
-//
-// Bước 1: kubectl config current-context  → tên context (đọc file local, rất nhanh)
-// Bước 2: TCP probe API server             → xác nhận cluster đang thực sự chạy
-//
-// Không dùng `kubectl cluster-info` vì nó làm full TLS handshake có thể
-// mất vài giây nếu cluster không phản hồi.
+// ── Kubernetes Checker ──
 
 #[derive(Deserialize)]
 struct KubeConfig {
@@ -168,7 +141,8 @@ fn shorten_context(ctx: &str) -> String {
     ctx.chars().take(14).collect()
 }
 
-// ── Brew services ────────────────────────────────────────────────────────────
+// ── Brew Services Checker ──
+
 #[derive(Deserialize)]
 struct BrewServiceEntry {
     name: String,
@@ -213,7 +187,7 @@ fn parse_brew_services_json(json: &str) -> HashSet<String> {
         .collect()
 }
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
+// ── Tests ──
 
 #[cfg(test)]
 mod tests {
@@ -227,15 +201,9 @@ mod tests {
             {"name":"postgresql@14","running":false,"loaded":false}
         ]"#;
         let services = parse_brew_services_json(json);
-        assert!(
-            !services.contains("redis"),
-            "redis should be skipped (port covered)"
-        );
-        assert!(services.contains("nginx"), "nginx should be included");
-        assert!(
-            !services.contains("postgresql@14"),
-            "postgresql@14 not running"
-        );
+        assert!(!services.contains("redis"));
+        assert!(services.contains("nginx"));
+        assert!(!services.contains("postgresql@14"));
     }
 
     #[test]

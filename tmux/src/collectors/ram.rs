@@ -1,4 +1,4 @@
-// RAM pressure (macOS) — `sysctl hw.memsize` (tổng RAM, cache 1 lần)
+// Background collector measuring macOS system memory pressure levels.
 
 use crate::state::SharedState;
 use std::sync::OnceLock;
@@ -6,6 +6,8 @@ use std::time::Duration;
 use tokio::process::Command;
 
 const POLL_INTERVAL: Duration = Duration::from_secs(3);
+
+// ── Main Loop ──
 
 pub async fn run(state: SharedState) {
     loop {
@@ -15,6 +17,8 @@ pub async fn run(state: SharedState) {
         tokio::time::sleep(POLL_INTERVAL).await;
     }
 }
+
+// ── Sysctl & VmStat Interface ──
 
 fn total_memory_bytes() -> Option<u64> {
     static TOTAL: OnceLock<Option<u64>> = OnceLock::new();

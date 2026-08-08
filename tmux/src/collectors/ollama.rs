@@ -1,24 +1,25 @@
+// Background collector monitoring Ollama server lifecycle and loaded models.
+
 use crate::state::SharedState;
+use std::sync::OnceLock;
 use std::time::Duration;
 use tokio::process::Command;
 
 const POLL_INTERVAL: Duration = Duration::from_secs(3);
 const API_URL: &str = "http://localhost:11434/api/ps";
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(1);
 const NOT_RUNNING_THRESHOLD: u32 = 2;
+
+// ── Main Loop ──
 
 pub async fn run(state: SharedState) {
     let mut consecutive_not_running: u32 = 0;
-
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(1))
-        .build()
-        .unwrap_or_default();
 
     loop {
         if is_ollama_running().await {
             consecutive_not_running = 0;
 
-            let active_model = fetch_active_model(&client).await;
+            let active_model = fetch_active_model().await;
             let display_text = active_model.unwrap_or_else(|| "ollama".to_string());
 
             state.write().await.ollama_model = Some(display_text);
@@ -37,6 +38,8 @@ pub async fn run(state: SharedState) {
     }
 }
 
+// ── Probe Helpers ──
+
 async fn is_ollama_running() -> bool {
     let output = Command::new("ps")
         .env("PATH", crate::utils::full_path())
@@ -52,9 +55,25 @@ async fn is_ollama_running() -> bool {
     }
 }
 
-async fn fetch_active_model(client: &reqwest::Client) -> Option<String> {
-    let resp = client.get(API_URL).send().await.ok()?;
-    let json: serde_json::Value = resp.json().await.ok()?;
+fn http_client() -> &'static reqwest::Client {
+    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .timeout(REQUEST_TIMEOUT)
+            .build()
+            .unwrap_or_default()
+    })
+}
+
+async fn fetch_active_model() -> Option<String> {
+    let json: serde_json::Value = http_client()
+        .get(API_URL)
+        .send()
+        .await
+        .ok()?
+        .json()
+        .await
+        .ok()?;
 
     let name = json["models"]
         .as_array()?
