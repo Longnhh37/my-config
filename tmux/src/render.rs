@@ -56,7 +56,6 @@ fn brew_icon(name: &str) -> &'static str {
         "rabbitmq" => "󰳖", // nf-md-rabbit
         "kafka" => "󰿟",    // nf-md-apache_kafka
 
-        // useful additions
         "vault" => "󰌆",      // nf-md-vault
         "consul" => "󰟾",     // nf-md-server_network
         "etcd" => "󰈀",       // nf-md-database
@@ -121,7 +120,6 @@ pub async fn build(state: &SharedState, pane: &PerPaneContext) -> String {
     }
 
     // ── RAM pressure — global / persistent ───────────────────────────────────
-    // Chỉ hiện khi RAM căng (>=80%), tránh làm rối status bar lúc bình thường.
     if s.ram_percent >= 80.0 {
         parts.push(format!("{ICON_RAM} {:.0}% ", s.ram_percent));
     }

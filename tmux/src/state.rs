@@ -7,7 +7,6 @@ use tokio::sync::RwLock;
 ///   docker_count      → collectors/docker.rs   (event-driven)
 ///   listening_ports   → collectors/ports.rs    (poll 3 s)
 ///   ollama_model      → collectors/ollama.rs   (poll 3 s)
-///   colima_running    → collectors/services.rs (poll 5 s)
 ///   kubernetes_context→ collectors/services.rs (poll 5 s)
 ///   brew_services     → collectors/services.rs (poll 5 s)
 #[derive(Default, Debug)]
