@@ -113,7 +113,12 @@ return {
 				},
 
 				["<Esc>"] = {
-					"cancel",
+					function(cmp)
+						if cmp.is_visible() then
+							cmp.hide()
+						end
+						return false
+					end,
 					"fallback",
 				},
 			},
