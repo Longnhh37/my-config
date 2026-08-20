@@ -6,6 +6,7 @@ pub struct GlobalState {
     pub docker_count: u32,
     pub listening_ports: HashSet<u16>,
     pub ollama_model: Option<String>,
+    pub mlx_model: Option<String>,
     pub kubernetes_context: Option<String>,
     pub brew_services: HashSet<String>,
     pub orbstack_running: bool,

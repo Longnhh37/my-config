@@ -1,5 +1,3 @@
-// Status-line visual renderer compiling state structures into unified Nerd Font layouts.
-
 use crate::state::{PerPaneContext, SharedState};
 
 // ── Nerd Font v3 Icons ──
@@ -33,38 +31,6 @@ fn brew_icon(name: &str) -> &'static str {
     let base = name.split('@').next().unwrap_or(name);
 
     match base {
-<<<<<<< HEAD
-        "nginx" => ICON_HTTP,
-        "caddy" => ICON_HTTP,
-
-        "dnsmasq" => "󰖟",  // nf-md-dns
-        "minio" => "󰉋",    // nf-md-folder
-        "rabbitmq" => "󰳖", // nf-md-rabbit
-        "kafka" => "󰿟",    // nf-md-apache_kafka
-
-        "vault" => "󰌆",      // nf-md-vault
-        "consul" => "󰟾",     // nf-md-server_network
-        "etcd" => "󰈀",       // nf-md-database
-        "prometheus" => "󱓽", // nf-md-chart_timeline_variant
-        "grafana" => "󱍃",    // nf-md-chart_donut
-
-||||||| a2e4671
-        "nginx" => ICON_HTTP,
-        "caddy" => ICON_HTTP,
-
-        "dnsmasq" => "󰖟",  // nf-md-dns
-        "minio" => "󰉋",    // nf-md-folder
-        "rabbitmq" => "󰳖", // nf-md-rabbit
-        "kafka" => "󰿟",    // nf-md-apache_kafka
-
-        // useful additions
-        "vault" => "󰌆",      // nf-md-vault
-        "consul" => "󰟾",     // nf-md-server_network
-        "etcd" => "󰈀",       // nf-md-database
-        "prometheus" => "󱓽", // nf-md-chart_timeline_variant
-        "grafana" => "󱍃",    // nf-md-chart_donut
-
-=======
         "nginx" | "caddy" => ICON_HTTP,
         "dnsmasq" => "󰖟",
         "minio" => "󰉋",
@@ -75,7 +41,6 @@ fn brew_icon(name: &str) -> &'static str {
         "etcd" => "󰈀",
         "prometheus" => "󱓽",
         "grafana" => "󱍃",
->>>>>>> dcc156c54411dec7b6709f4814916d0405bcb136
         _ => ICON_BREW,
     }
 }
@@ -108,6 +73,11 @@ pub async fn build(state: &SharedState, pane: &PerPaneContext) -> String {
         parts.push(format!("{ICON_AI} {short}"));
     }
 
+    if let Some(model) = &s.mlx_model {
+        let short: String = model.chars().take(12).collect();
+        parts.push(format!("{ICON_AI} {short}"));
+    }
+
     let mut db: Vec<&str> = Vec::new();
     if s.listening_ports.contains(&5432) { db.push(ICON_PG); }
     if s.listening_ports.contains(&6379) { db.push(ICON_REDIS); }
@@ -121,13 +91,8 @@ pub async fn build(state: &SharedState, pane: &PerPaneContext) -> String {
         parts.push(format!("{ICON_DOCKER} {}", s.docker_count));
     }
 
-<<<<<<< HEAD
-    // ── RAM pressure — global / persistent ───────────────────────────────────
-||||||| a2e4671
     // ── RAM pressure — global / persistent ───────────────────────────────────
     // Chỉ hiện khi RAM căng (>=80%), tránh làm rối status bar lúc bình thường.
-=======
->>>>>>> dcc156c54411dec7b6709f4814916d0405bcb136
     if s.ram_percent >= 80.0 {
         parts.push(format!("{ICON_RAM} {:.0}% ", s.ram_percent));
     }

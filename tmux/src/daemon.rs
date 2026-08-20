@@ -27,6 +27,9 @@ pub async fn run() -> Result<()> {
     spawn_collector(move || collectors::ollama::run(s.clone()));
 
     let s = state.clone();
+    spawn_collector(move || collectors::mlx::run(s.clone()));
+
+    let s = state.clone();
     spawn_collector(move || collectors::services::run(s.clone()));
 
     let s = state.clone();
