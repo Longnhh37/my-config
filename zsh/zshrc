@@ -1,0 +1,41 @@
+# ═══════════════════════════════════════════════════════════════
+# ~/.zshrc — Entry point
+# ═══════════════════════════════════════════════════════════════
+# Type "doc" to open the dev guide.
+#
+# Module layout (~/.zsh/):
+#   env.zsh         exports, PATH, VISUAL
+#   completion.zsh  fpath, compinit
+#   options.zsh     setopt, keybindings
+#   aliases.zsh     all aliases (docker, git, cargo, sys, cli replacements)
+#   functions.zsh   custom functions (tvim, dump, groot, serve, ...)
+#   tools.zsh       bat, delta, fzf, zoxide, dust, procs, btm config
+#   ai.zsh          Ollama + Claude
+#   dev_extras.zsh  fzf/rg/fd/sd/bat/eza functions
+#
+#
+#   Note: ai.zsh and dev_extras.zsh need to be loaded after env.zsh for env vars
+
+
+# ─────────────────────────────────────────────
+# CORE MODULES
+# ─────────────────────────────────────────────
+source ~/.zsh/env.zsh          # 1. Biến môi trường & PATH chính
+source ~/.zsh/options.zsh      # 2. Cấu hình bindkey & History
+source ~/.zsh/completion.zsh   # 3. Hệ thống gợi ý & Autosuggestions
+source ~/.zsh/aliases.zsh      # 4. Tập hợp Alias các công cụ
+source ~/.zsh/dev_extras.zsh   # 5. Các hàm bổ trợ FZF/Bat/Rg
+source ~/.zsh/functions.zsh    # 6. Các hàm tiện ích hệ thống / Git / Rust
+source ~/.zsh/tools.zsh        # 7. Modern CLI
+source ~/.zsh/ai.zsh           # 8. AI
+
+
+# ─────────────────────────────────────────────
+# SYNTAX HIGHLIGHT  (must be last)
+# ─────────────────────────────────────────────
+source "$(brew --prefix)/opt/zsh-fast-syntax-highlighting/share/zsh-fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
+
+typeset -gA FAST_HIGHLIGHT_STYLES
+FAST_HIGHLIGHT_STYLES=()
+FAST_HIGHLIGHT_STYLES[unknown-token]='fg=red,bold'
+FAST_HIGHLIGHT_STYLES[unknown-command]='fg=red,bold'

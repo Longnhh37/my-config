@@ -1,0 +1,5 @@
+export EDITOR=nvim
+
+# uv — added to PATH here for non-interactive shells (scripts, cron, etc.)
+# Interactive PATH managed in ~/.zshrc
+export PATH="$HOME/.local/bin:$PATH"
