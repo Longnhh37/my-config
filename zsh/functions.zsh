@@ -119,6 +119,20 @@ dump() {
 
   : > "$output"
 
+  {
+        echo "=================================================="
+        echo "TREE OVERVIEW"
+        echo "=================================================="
+        for target in "$@"; do
+          if [[ -d "$target" ]]; then
+            echo "--- $target ---"
+            tree -L 4 "$target"
+            echo
+          fi
+        done
+        echo
+      } >> "$output"
+
   for target in "$@"; do
     if [[ -d "$target" ]]; then
       find "$target" -type f \
