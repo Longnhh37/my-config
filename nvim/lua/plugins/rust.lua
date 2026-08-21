@@ -2,7 +2,7 @@
 return {
 	{
 		"mrcjkb/rustaceanvim",
-		version = "^9",
+		version = "9",
 		lazy = false,
 
 		config = function()
