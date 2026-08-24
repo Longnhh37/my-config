@@ -1,4 +1,4 @@
-# tmux config + tmuxd -- tmux status bar collector
+# tmux config + tmuxd – tmux status bar collector
 
 ## What it is
 
