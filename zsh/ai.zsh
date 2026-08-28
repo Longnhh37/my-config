@@ -2,10 +2,6 @@
 # ~/.zsh/ai.zsh
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Ollama server
-# ═══════════════════════════════════════════════════════════════════════════════
-
 # --- Ollama server ---
 export OLLAMA_HOST="http://127.0.0.1:11434"
 export OLLAMA_MAX_LOADED_MODELS=1
@@ -29,33 +25,33 @@ alias olrestart="olstop; sleep 1; olstart"
 alias olkill="pkill -9 ollama; echo '■ Ollama force killed.'"
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# MLX server
+# MLX server (Apple Silicon, gpt-oss-20b)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Start MLX server với model bất kỳ: mlx_start <model> [port]
+# Start MLX server with any model: mlx_start <model> [port]
 mlx_start() {
   if [[ -z "$1" ]]; then
-    echo "❌ Thiếu tên model. Dùng: mlx_start <model> [port]" >&2
+    echo "❌ Missing model name. Usage: mlx_start <model> [port]" >&2
     return 1
   fi
   local model="$1"
   local port="${2:-8080}"
-  echo "● Đang khởi động MLX server: $model (port $port)..."
+  echo "● Starting MLX server: $model (port $port)..."
   mlx_lm.server --model "$model" --port "$port"
 }
 
-# Start MLX server cố định với gpt-oss-20b, port 8080
+# Start MLX server fixed to gpt-oss-20b, port 8080
 mlx_start_oss() {
   mlx_start "mlx-community/gpt-oss-20b-MXFP4-Q4" 8080
 }
 
-# Dừng mọi mlx server đang chạy
+# Stop any running mlx server
 mlx_stop() {
   if pgrep -f "mlx_lm.server" >/dev/null 2>&1; then
     pkill -f "mlx_lm.server"
-    echo "■ Đã dừng MLX server."
+    echo "■ MLX server stopped."
   else
-    echo "ℹ️  Không có MLX server nào đang chạy."
+    echo "ℹ️  No MLX server currently running."
   fi
 }
 
@@ -66,7 +62,7 @@ mlx_stop() {
 alias oc-or="ollama launch opencode --model ornith-local"
 alias oc-gpt="ollama launch opencode --model gpt-oss:120b-cloud"
 
-# opencode + gpt-oss-20b qua MLX (không đụng ~/.config/opencode/opencode.json global)
+# opencode + gpt-oss-20b via MLX (does not touch the global ~/.config/opencode/opencode.json)
 oc-oss-20b() {
   local model_id="mlx-community/gpt-oss-20b-MXFP4-Q4"
   local port=8080
@@ -74,12 +70,12 @@ oc-oss-20b() {
   local cfg_file="/tmp/opencode-oss-20b.json"
 
   if [[ ! -d "$cache_dir" ]]; then
-    echo "❌ Model chưa được tải về. Chạy 'mlx_start_oss' trước để mlx-lm tự tải model." >&2
+    echo "❌ Model not downloaded yet. Run 'mlx_start_oss' first so mlx-lm pulls it automatically." >&2
     return 1
   fi
 
   if ! curl -s "http://localhost:${port}/v1/models" >/dev/null 2>&1; then
-    echo "❌ MLX server chưa chạy ở port ${port}. Chạy 'mlx_start_oss' ở terminal khác trước." >&2
+    echo "❌ MLX server not running on port ${port}. Run 'mlx_start_oss' in another terminal first." >&2
     return 1
   fi
 
@@ -103,6 +99,6 @@ oc-oss-20b() {
 }
 EOF
 
-  echo "✅ Model đã sẵn sàng, server đang chạy tại port ${port}. Khởi động opencode..."
+  echo "✅ Model ready, server running on port ${port}. Starting opencode..."
   OPENCODE_CONFIG="$cfg_file" opencode
 }
