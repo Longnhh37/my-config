@@ -36,9 +36,44 @@ mlx_start() {
   fi
   local model="$1"
   local port="${2:-8080}"
+  local logdir="$HOME/.mlx_logs"
+  mkdir -p "$logdir"
+  local logfile="$logdir/mlx_${port}.log"
+  local pidfile="$logdir/mlx_${port}.pid"
+
   echo "● Starting MLX server: $model (port $port)..."
-  mlx_lm.server --model "$model" --port "$port"
+  nohup mlx_lm.server --model "$model" --port "$port" \
+    > "$logfile" 2>&1 &
+  local pid=$!
+  disown "$pid"
+  echo "$pid" > "$pidfile"
+
+  echo "✅ Started (PID $pid). Log: $logfile"
 }
+
+mlx_stop() {
+  local port="${1:-8080}"
+  local pidfile="$HOME/.mlx_logs/mlx_${port}.pid"
+  if [[ ! -f "$pidfile" ]]; then
+    echo "❌ No PID file for port $port" >&2
+    return 1
+  fi
+  local pid
+  pid=$(cat "$pidfile")
+  if kill "$pid" 2>/dev/null; then
+    echo "🛑 Stopped MLX server (PID $pid, port $port)"
+    rm -f "$pidfile"
+  else
+    echo "❌ Process $pid not running (stale pidfile removed)" >&2
+    rm -f "$pidfile"
+  fi
+}
+
+mlx_log() {
+  local port="${1:-8080}"
+  tail -f "$HOME/.mlx_logs/mlx_${port}.log"
+}
+
 
 # Start MLX server fixed to gpt-oss-20b, port 8080
 mlx_start_oss() {
