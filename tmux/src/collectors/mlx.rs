@@ -84,14 +84,12 @@ async fn fetch_active_model() -> Option<String> {
         .as_str()?
         .to_string();
 
-    // Model ids look like "mlx-community/gpt-oss-20b-MXFP4-Q8";
-    // keep only the last path segment before truncating.
     let base: String = id
         .rsplit('/')
         .next()
         .unwrap_or(&id)
         .chars()
-        .take(12)
+        .take(11)
         .collect();
 
     Some(base)
